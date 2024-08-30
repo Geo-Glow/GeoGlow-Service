@@ -10,7 +10,7 @@ async function connectToDatabase() {
         try {
             await client.connect();
             console.log("Connected to MongoDB");
-            db = client.db("GeoGlow_db");
+            db = client.db("Vreunde");
         } catch (err) {
             console.error("Error connecting to MongoDB", err);
             throw new Error("Failed to connect to MongoDB");
@@ -42,6 +42,18 @@ async function getAllFriends() {
     }
 }
 
+async function getAllFriendsInGroup(groupId) {
+    try {
+        const db = await connectToDatabase();
+        const friendsCollection = db.collection("friends");
+
+        return friendsCollection.find({ groupId: groupId }).toArray();
+    } catch (err) {
+        console.error(`Error retrieving friends in group: ${groupId}`, err);
+        throw new Error("Failed to retrieve friendgroup");
+    }
+}
+/*
 async function getAllOnlineFriends() {
     try {
         const friends = await getAllFriends();
@@ -74,10 +86,37 @@ async function getAllDevices() {
     }
 }
 
+async function getDeviceIdByFriendId(friendId) {
+    try {
+        const db = await connectToDatabase();
+        const deviceCollection = db.collection('devices');
+        const device = await deviceCollection.findOne(
+            { friendId: friendId },
+        )
+        if (device) {
+            return { deviceId: device.deviceId, panelIds: device.panelIds };
+        } else {
+            return null;
+        }
+    } catch (err) {
+        console.error(`Error retrieving deviceId for ${friendId}`);
+        throw new Error("Failed to retrieve deviceId");
+    }
+}
+
 module.exports = {
     connectToDatabase,
     closeConnection,
     getAllFriends,
     getAllOnlineFriends,
-    getAllDevices
+    getAllDevices,
+    getDeviceIdByFriendId,
+    getAllFriendsInGroup
+};*/
+
+module.exports = {
+    connectToDatabase,
+    closeConnection,
+    getAllFriends,
+    getAllFriendsInGroup,
 };
