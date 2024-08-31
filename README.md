@@ -16,7 +16,7 @@ The Service will provide the following routes
 
 - [x] `GET /friends`
 - [x] `GET /friends?groupId={groupId}`
-- [ ] `GET /friends/{friendId}`
+- [x] `GET /friends/{friendId}`
 - [ ] `POST /friends/{friendId}/colors`
 - [ ] `PATCH /friends/{friendId}`
 

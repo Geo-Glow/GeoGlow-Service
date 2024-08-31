@@ -2,6 +2,10 @@ require('dotenv').config();
 const { MongoClient } = require("mongodb");
 
 const uri = process.env.MONGO_URI;
+if (!uri) {
+    throw new Error("Mongo_URI is not defined in environment variables.");
+}
+
 const client = new MongoClient(uri);
 let db;
 
@@ -31,10 +35,14 @@ async function closeConnection() {
     }
 }
 
+async function getCollection(collectionName) {
+    const db = await connectToDatabase();
+    return db.collection(collectionName);
+}
+
 async function getAllFriends() {
     try {
-        const db = await connectToDatabase();
-        const friendsCollection = db.collection("friends");
+        const friendsCollection = await getCollection("friends");
         return friendsCollection.find({}).toArray();
     } catch (err) {
         console.error("Error retrieving friends:", err);
@@ -44,36 +52,31 @@ async function getAllFriends() {
 
 async function getAllFriendsInGroup(groupId) {
     try {
-        const db = await connectToDatabase();
-        const friendsCollection = db.collection("friends");
-
+        const friendsCollection = await getCollection("friends");
         return friendsCollection.find({ groupId: groupId }).toArray();
     } catch (err) {
         console.error(`Error retrieving friends in group: ${groupId}`, err);
         throw new Error("Failed to retrieve friendgroup");
     }
 }
-/*
-async function getAllOnlineFriends() {
+
+async function getFriend(friendId) {
     try {
-        const friends = await getAllFriends();
-        if (!friends.length) {
-            return [];
-        }
-
-        const db = await connectToDatabase();
-        const deviceCollection = db.collection("devices");
-
-        const friendIds = friends.map(friend => friend.friendId);
-        const devices = await deviceCollection.find({ friendId: { $in: friendIds } }).toArray();
-
-        const deviceFriendIds = devices.map(device => device.friendId);
-        return friends.filter(friend => deviceFriendIds.includes(friend.friendId));
+        const friendsCollection = await getCollection("friends");
+        const friend = await friendsCollection.findOne({ friendId: friendId });
+        if (!friend) {
+            throw new Error("Friend not found");
+        } else return friend;
     } catch (err) {
-        console.error("Error retrieving online friends:", err);
-        throw new Error("Failed to retrieve online friends");
+        if (err.message === "Friend not found") {
+            throw err;
+        } else {
+            console.error(`Error retrieving friend with friendId: ${friendId}`, err);
+            throw new Error("Failed to retrieve friend");
+        }
     }
 }
+/*
 
 async function getAllDevices() {
     try {
@@ -103,20 +106,12 @@ async function getDeviceIdByFriendId(friendId) {
         throw new Error("Failed to retrieve deviceId");
     }
 }
-
-module.exports = {
-    connectToDatabase,
-    closeConnection,
-    getAllFriends,
-    getAllOnlineFriends,
-    getAllDevices,
-    getDeviceIdByFriendId,
-    getAllFriendsInGroup
-};*/
+*/
 
 module.exports = {
     connectToDatabase,
     closeConnection,
     getAllFriends,
     getAllFriendsInGroup,
+    getFriend
 };

@@ -1,18 +1,21 @@
+require('dotenv').config();
 const express = require('express');
-const bodyParser = require('body-parser');
 const db = require('./db');
 const mqtt = require('mqtt');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-const mqttClient = mqtt.connect('mqtt://hive.dock.moxd.io');
+const mqttUrl = process.env.MQTT_URL || null;
+if (!mqttUrl) {
+    throw new Error("MQTT_URL is not defined in environment variables");
+}
+const mqttClient = mqtt.connect(mqttUrl);
 
-app.use(bodyParser.json());
 app.use(express.json());
 
 function asyncHandler(fn) {
-    return function (req, res, next) {
+    return (req, res, next) => {
         Promise.resolve(fn(req, res, next)).catch(next);
     };
 }
@@ -48,20 +51,7 @@ const hexToRgb = (hex) => {
             res.send("Hello world");
         });
 
-        /*app.get('/friends', asyncHandler(async (req, res) => {
-            const data = await db.getAllFriends();
-            res.json(data);
-        }));
-
-        app.get('/friends/online', asyncHandler(async (req, res) => {
-            const data = await db.getAllOnlineFriends();
-            res.json(data);
-        }));
-
-        app.get('/friends/:groupId', asyncHandler(async (req, res) => {
-            const data = await db.getAllFriendsInGroup(req.params.groupId);
-            res.json(data);
-        }));
+        /*
 
         app.get('/devices', asyncHandler(async (req, res) => {
             const data = await db.getAllDevices();
@@ -95,19 +85,23 @@ const hexToRgb = (hex) => {
         // GETs all friends
         app.get('/friends', asyncHandler(async (req, res) => {
             const groupId = req.query.groupId;
-            let data;
-            if (groupId) {
-                data = await db.getAllFriendsInGroup(groupId);
-            } else {
-                data = await db.getAllFriends();
-            }
-
+            const data = groupId ? await db.getAllFriendsInGroup(groupId) : await db.getAllFriends();
             res.status(200).json(data);
         }));
 
         // GETs all information about friend with friendId
         app.get('/friends/:friendId', asyncHandler(async (req, res) => {
-            // TODO();
+            try {
+                const friendId = req.params.friendId;
+                data = await db.getFriend(friendId);
+                res.status(200).json(data);
+            } catch (err) {
+                if (err.message === "Friend not found") {
+                    res.sendStatus(404);
+                } else {
+                    res.sendStatus(500);
+                }
+            }
         }));
 
         // POSTs (sends) colors to friend with friendId
