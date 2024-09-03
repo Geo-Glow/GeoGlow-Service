@@ -76,37 +76,6 @@ async function getFriend(friendId) {
         }
     }
 }
-/*
-
-async function getAllDevices() {
-    try {
-        const db = await connectToDatabase();
-        const deviceCollection = db.collection('devices');
-        return deviceCollection.find({}).toArray();
-    } catch (err) {
-        console.error("Error retrieving devices:", err);
-        throw new Error("Failed to retrieve devices");
-    }
-}
-
-async function getDeviceIdByFriendId(friendId) {
-    try {
-        const db = await connectToDatabase();
-        const deviceCollection = db.collection('devices');
-        const device = await deviceCollection.findOne(
-            { friendId: friendId },
-        )
-        if (device) {
-            return { deviceId: device.deviceId, panelIds: device.panelIds };
-        } else {
-            return null;
-        }
-    } catch (err) {
-        console.error(`Error retrieving deviceId for ${friendId}`);
-        throw new Error("Failed to retrieve deviceId");
-    }
-}
-*/
 
 module.exports = {
     connectToDatabase,

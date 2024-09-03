@@ -17,4 +17,15 @@ function hexToRgb(hex) {
     return [r, g, b];
 }
 
-module.exports = hexToRgb;
+function fillColors(colors, desiredLength) {
+    let filledColors = [];
+    for (let i = 0; i < desiredLength; i++) {
+        filledColors.push(colors[i % colors.length]);
+    }
+    return filledColors;
+}
+
+module.exports = {
+    hexToRgb,
+    fillColors,
+}
