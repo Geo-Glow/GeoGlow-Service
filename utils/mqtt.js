@@ -20,7 +20,7 @@ client.on('error', function (error) {
 function sendColors(friendId, colors) {
     const payload = JSON.stringify(colors);
 
-    const topic = `GeoGlow/${friendId}`;
+    const topic = `GeoGlow/${friendId}/color`;
 
     client.publish(topic, payload, { qos: 1 }, (err) => {
         if (err) {

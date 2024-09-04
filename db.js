@@ -77,10 +77,21 @@ async function getFriend(friendId) {
     }
 }
 
+async function postFriend(data) {
+    try {
+        const friendsCollection = await getCollection("friends");
+        const { friendId, name, tileIds, groupId } = data;
+        friendsCollection.insertOne(data);
+    } catch (err) {
+        console.log(err)
+    }
+}
+
 module.exports = {
     connectToDatabase,
     closeConnection,
     getAllFriends,
     getAllFriendsInGroup,
-    getFriend
+    getFriend,
+    postFriend
 };

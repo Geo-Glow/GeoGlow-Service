@@ -27,6 +27,12 @@ router.get('/:friendId', asyncHandler(async (req, res) => {
     }
 }));
 
+router.post('/', asyncHandler(async (req, res) => {
+    const { friendId, panelIds, groupId } = req.body;
+    await db.postFriend({ friendId, panelIds, groupId });
+    res.send(friendId, panelIds, groupId);
+}));
+
 const mapColorsToTileIds = (tileIds, colors) => {
     let finalColors;
     if (tileIds.length > colors.length) {
