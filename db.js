@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { MongoClient } = require("mongodb");
+const { MongoClient, Timestamp } = require("mongodb");
 
 const uri = process.env.MONGO_URI;
 if (!uri) {
@@ -15,6 +15,7 @@ async function connectToDatabase() {
             await client.connect();
             console.log("Connected to MongoDB");
             db = client.db("Vreunde");
+            await createTTLIndex();
         } catch (err) {
             console.error("Error connecting to MongoDB", err);
             throw new Error("Failed to connect to MongoDB");
@@ -78,12 +79,52 @@ async function getFriend(friendId) {
 }
 
 async function postFriend(data) {
+    let result;
     try {
         const friendsCollection = await getCollection("friends");
-        const { friendId, name, tileIds, groupId } = data;
-        friendsCollection.insertOne(data);
+        const { friendId } = data;
+        const friend = await friendsCollection.findOne({ friendId: friendId })
+        if (friend) {
+            throw new Error("Friend already exists");
+        }
+        const lastPing = new Date();
+        data["lastPing"] = lastPing;
+        result = friendsCollection.insertOne(data);
     } catch (err) {
-        console.log(err)
+        if (err.message === "Friend already exists") {
+            throw err;
+        } else {
+            console.error("Error creating new friend resource: ", err);
+            throw new Error("Failed to create new friend ressource");
+        }
+    }
+    return result;
+}
+
+async function pingFriend(data) {
+    try {
+        const friendsCollection = await getCollection("friends");
+        const updateDoc = {
+            $set: {
+                tileIds: data.tileIds,
+                lastPing: new Date()
+            },
+        };
+        const result = await friendsCollection.updateOne({ friendId: data.friendId }, updateDoc);
+    } catch (err) {
+        console.error("Error updating friend: ", err);
+        throw new Error("Failed to update friend");
+    }
+}
+
+async function createTTLIndex() {
+    try {
+        const friendsCollection = await getCollection("friends");
+        await friendsCollection.createIndex({ lastPing: 1 }, { expireAfterSeconds: 150 });
+        console.log("TTL index created on lastPing field");
+    } catch (err) {
+        console.error("Error creating TTL index:", err);
+        throw new Error("Failed to create TTL index");
     }
 }
 
@@ -93,5 +134,6 @@ module.exports = {
     getAllFriends,
     getAllFriendsInGroup,
     getFriend,
-    postFriend
+    postFriend,
+    pingFriend
 };

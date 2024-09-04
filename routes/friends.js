@@ -1,7 +1,7 @@
 const express = require('express');
-const { asyncHandler } = require('../middlewares/asyncHandler');
 const db = require('../db');
 
+const { asyncHandler } = require('../middlewares/asyncHandler');
 const { fillColors, hexToRgb } = require("../utils/colorUtils");
 const { sendColors } = require("../utils/mqtt");
 
@@ -28,9 +28,43 @@ router.get('/:friendId', asyncHandler(async (req, res) => {
 }));
 
 router.post('/', asyncHandler(async (req, res) => {
-    const { friendId, panelIds, groupId } = req.body;
-    await db.postFriend({ friendId, panelIds, groupId });
-    res.send(friendId, panelIds, groupId);
+    let result;
+    try {
+        const { friendId, tileIds, groupId, name } = req.body;
+        if (!friendId || !tileIds || !groupId || !name) {
+            return res.sendStatus(400);
+        }
+        result = await db.postFriend({ friendId, tileIds, groupId });
+        res.setHeader('Location', `/friends/${friendId}`);
+    } catch (err) {
+        if (err.message === "Friend already exists") {
+            res.status(409);
+        } else {
+            res.status(500);
+        }
+        console.error(err);
+        return res.send();
+    }
+    res.sendStatus(201);
+}));
+
+router.patch('/:friendId', asyncHandler(async (req, res) => {
+    const data = req.body;
+    try {
+        await db.getFriend(req.params.friendId);
+    } catch (err) {
+        if (err.message === "Friend not found") {
+            await db.postFriend(data);
+            return res.sendStatus(201);
+        }
+    }
+    try {
+        await db.pingFriend(data);
+    } catch (err) {
+        return res.sendStatus(500);
+    }
+
+    res.sendStatus(204);
 }));
 
 const mapColorsToTileIds = (tileIds, colors) => {
