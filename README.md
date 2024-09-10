@@ -1,3 +1,6 @@
+# !!! Work in Progress !!!
+This works only in combination with the other Repositories. They are currently private and will probably stay private for some more time. This repo is only public to enable Github Pages.
+
 # GeoGlow Service
 
 This is the Backend-Service (or the ❤️) of GeoGlow.
