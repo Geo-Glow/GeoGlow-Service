@@ -90,6 +90,7 @@ async function postFriend(data) {
 
         const lastPing = new Date();
         data.lastPing = lastPing;
+        data.queue = [];
         return await friendsCollection.insertOne(data);
     } catch (err) {
         if (err.message === "Friend already exists") {
@@ -117,6 +118,28 @@ async function pingFriend(data) {
     }
 }
 
+async function addToQueue(friendId, colors) {
+    try {
+        const friendsCollection = await getCollection("friends");
+        const updateDoc = {
+            $push: {
+                queue: colors
+            }
+        };
+
+        const result = await friendsCollection.updateOne({ friendId }, updateDoc);
+        if (result.matchedCount === 0) {
+            throw new Error('Friend not found');
+        }
+
+        console.log(`Colors added to the queue for friendId: ${friendId}`);
+        return result;
+    } catch (err) {
+        console.error('Error adding to queue: ', err);
+        throw new Error('Failed to add to queue');
+    }
+}
+
 async function createTTLIndex() {
     try {
         const friendsCollection = await getCollection("friends");
@@ -135,5 +158,6 @@ module.exports = {
     getAllFriendsInGroup,
     getFriend,
     postFriend,
-    pingFriend
+    pingFriend,
+    addToQueue
 };

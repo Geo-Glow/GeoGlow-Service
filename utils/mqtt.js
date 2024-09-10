@@ -23,9 +23,9 @@ function sendColors(friendId, colors) {
     const topic = `GeoGlow/${friendId}/color`;
 
     client.publish(topic, payload, { qos: 1 }, (err) => {
-        if (err) {
-            console.error('Failed to publish message', err);
-        }
+        if (!err) return true
+        console.error('Failed to publish message', err);
+        return false;
     });
 }
 

@@ -94,10 +94,20 @@ router.post('/:friendId/colors', asyncHandler(async (req, res) => {
         }
 
         const colorMapping = mapColorsToTileIds(friend.tileIds, colors);
+        if (friend.tileIds.length === 0) {
+            // Friend is not online => Colors were successfully appended to friends queue
+            await db.addToQueue(friendId, colors);
+            res.sendStatus(202); // Send 202 Accepted status
+        } else {
+            if (sendColors(friendId, colorMapping) === true) {
+                // Colors were sucessfully sent
+                res.sendStatus(200); // Send 200 OK status
+            } else {
+                // Sending colors was unsuccessfull
+                res.sendStatus(500); // Send 500 Internal Server Error status
+            }
 
-        sendColors(friendId, colorMapping);
-        res.sendStatus(200);
-
+        }
     } catch (err) {
         if (err.message === "Friend not found") {
             res.sendStatus(404);
