@@ -18,14 +18,18 @@ client.on('error', function (error) {
 });
 
 function sendColors(friendId, colors) {
-    const payload = JSON.stringify(colors);
+    return new Promise((resolve, reject) => {
+        const payload = JSON.stringify(colors);
+        const topic = `GeoGlow/${friendId}/color`;
 
-    const topic = `GeoGlow/${friendId}/color`;
-
-    client.publish(topic, payload, { qos: 1 }, (err) => {
-        if (!err) return true
-        console.error('Failed to publish message', err);
-        return false;
+        client.publish(topic, payload, { qos: 1 }, (err) => {
+            if (err) {
+                console.error('Failed to publish message', err);
+                reject(err);
+            } else {
+                resolve(true);
+            }
+        });
     });
 }
 
