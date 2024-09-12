@@ -17,9 +17,10 @@ client.on('error', function (error) {
     console.error('MQTT connection error: ', error);
 });
 
-function sendColors(friendId, colors) {
+function sendColors(friendId, colors, fromFriendColor) {
     return new Promise((resolve, reject) => {
-        const payload = JSON.stringify(colors);
+        let payload = { ...colors, fromFriendColor }
+        payload = JSON.stringify(payload);
         const topic = `GeoGlow/${friendId}/color`;
 
         client.publish(topic, payload, { qos: 1 }, (err) => {

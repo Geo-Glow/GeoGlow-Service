@@ -25,7 +25,20 @@ function fillColors(colors, desiredLength) {
     return filledColors;
 }
 
+function generateRandomColor(reservedColors) {
+    function getRandomInt(max) {
+        return Math.floor(Math.random() * max);
+    }
+    let color;
+    do {
+        color = [getRandomInt(256), getRandomInt(256), getRandomInt(256)];
+    } while (reservedColors.has(color));
+
+    return color;
+}
+
 module.exports = {
     hexToRgb,
     fillColors,
+    generateRandomColor
 }

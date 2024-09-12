@@ -27,6 +27,23 @@ router.get('/:friendId', asyncHandler(async (req, res) => {
     }
 }));
 
+router.post('/:friendId/heartbeat', asyncHandler(async (req, res) => {
+    try {
+        const friendId = req.params.friendId;
+        const timestamp = new Date();
+        await db.updateTimestamp(friendId, timestamp);
+        res.sendStatus(204);
+    } catch (err) {
+        if (err.message === "Friend not found") {
+
+            res.sendStatus(404);
+        } else {
+            console.log(err);
+            res.sendStatus(500);
+        }
+    }
+}))
+
 router.post('/', asyncHandler(async (req, res) => {
     let result;
     try {
@@ -34,7 +51,7 @@ router.post('/', asyncHandler(async (req, res) => {
         if (!friendId || !tileIds || !groupId || !name) {
             return res.sendStatus(400);
         }
-        result = await db.postFriend({ friendId, tileIds, groupId });
+        result = await db.createNewFriend({ friendId, tileIds, groupId });
         res.setHeader('Location', `/friends/${friendId}`);
     } catch (err) {
         if (err.message === "Friend already exists") {
@@ -54,7 +71,7 @@ router.patch('/:friendId', asyncHandler(async (req, res) => {
         await db.getFriend(req.params.friendId);
     } catch (err) {
         if (err.message === "Friend not found") {
-            await db.postFriend(data);
+            await db.createNewFriend(data);
             return res.sendStatus(201);
         }
     }
@@ -85,13 +102,16 @@ const mapColorsToTileIds = (tileIds, colors) => {
 
 router.post('/:friendId/colors', asyncHandler(async (req, res) => {
     try {
-        const { colors } = req.body;
+        const { colors, fromFriendId } = req.body;
         const { friendId } = req.params;
         const friend = await db.getFriend(friendId);
+        const fromFriend = await db.getFriend(fromFriendId);
 
-        if (!friend || !friend.tileIds) {
+        if (!friend || !friend.tileIds || !fromFriend) {
             throw new Error("Friend not found");
         }
+
+        const fromFriendColor = fromFriend.color;
 
         const colorMapping = mapColorsToTileIds(friend.tileIds, colors);
         if (friend.tileIds.length === 0) {
@@ -99,7 +119,7 @@ router.post('/:friendId/colors', asyncHandler(async (req, res) => {
             await db.addToQueue(friendId, colors);
             res.sendStatus(202); // Send 202 Accepted status
         } else {
-            sendColors(friendId, colorMapping)
+            sendColors(friendId, colorMapping, fromFriendColor)
                 .then(() => res.sendStatus(200))
                 .catch((err) => { res.sendStatus(500) });
         }

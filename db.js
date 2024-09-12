@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { MongoClient } = require("mongodb");
-
+const { generateRandomColor } = require("./utils/colorUtils");
 const uri = process.env.MONGO_URI;
 
 if (!uri) {
@@ -62,6 +62,28 @@ async function getAllFriendsInGroup(groupId) {
     }
 }
 
+async function updateTimestamp(friendId, timestamp) {
+    try {
+        const friendsCollection = await getCollection("friends");
+        const updateDoc = {
+            $set: {
+                lastPing: timestamp
+            },
+        };
+        const modified = await friendsCollection.updateOne({ friendId: friendId }, updateDoc);
+        if (modified.modifiedCount == 0) {
+            throw new Error("Friend not found");
+        }
+    } catch (err) {
+        if (err.message === "Friend not found") {
+            throw err;
+        } else {
+            console.error(`Error updating timestamp of friend with friendID: ${friendId}`, err);
+            throw new Error("Failed to update timestamp of friend");
+        }
+    }
+}
+
 async function getFriend(friendId) {
     try {
         const friendsCollection = await getCollection("friends");
@@ -80,13 +102,20 @@ async function getFriend(friendId) {
     }
 }
 
-async function postFriend(data) {
+async function createNewFriend(data) {
     try {
         const friendsCollection = await getCollection("friends");
-        const { friendId } = data;
+        const { friendId, groupId } = data;
         const friend = await friendsCollection.findOne({ friendId: friendId })
 
         if (friend) throw new Error("Friend already exists");
+
+        // Fetch all friends in friend group
+        const groupFriends = await friendsCollection.find({ groupId: groupId }).toArray();
+        // Extract existing colors
+        const reservedColors = new Set(groupFriends.map(friend => friend.color));
+        // Generate new color
+        data.color = generateRandomColor(reservedColors);
 
         const lastPing = new Date();
         data.lastPing = lastPing;
@@ -157,7 +186,8 @@ module.exports = {
     getAllFriends,
     getAllFriendsInGroup,
     getFriend,
-    postFriend,
+    createNewFriend,
     pingFriend,
-    addToQueue
+    addToQueue,
+    updateTimestamp
 };
