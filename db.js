@@ -18,6 +18,7 @@ async function connectToDatabase() {
         console.log("Connected to MongoDB");
         db = client.db("Vreunde");
         await createTTLIndex();
+        await createMessageCompoundIndex();
         return db;
     } catch (err) {
         console.error("Error connecting to MongoDB", err);
@@ -180,6 +181,28 @@ async function createTTLIndex() {
     }
 }
 
+async function createMessageCompoundIndex() {
+    try {
+        const messageCollection = await getCollection("messages");
+        await messageCollection.createIndex({ "fromFriendId": 1, "toFriendId": 1, "timestamp": -1 });
+        console.log("Compund index for message collection created");
+    } catch (err) {
+        console.error("Error creating compound index for message collection: ", err);
+        throw new Error("Failed to create compound index");
+    }
+}
+
+async function saveMessage(message) {
+    try {
+        const messageCollection = await getCollection("messages");
+        message.timestamp = new Date();
+        messageCollection.insertOne(message);
+    } catch (err) {
+        console.log(err);
+        throw err
+    }
+}
+
 module.exports = {
     connectToDatabase,
     closeConnection,
@@ -189,5 +212,6 @@ module.exports = {
     createNewFriend,
     pingFriend,
     addToQueue,
-    updateTimestamp
+    updateTimestamp,
+    saveMessage,
 };

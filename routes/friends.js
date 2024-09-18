@@ -120,8 +120,14 @@ router.post('/:friendId/colors', asyncHandler(async (req, res) => {
             res.sendStatus(202); // Send 202 Accepted status
         } else {
             sendColors(friendId, colorMapping, fromFriendColor)
-                .then(() => res.sendStatus(200))
-                .catch((err) => { res.sendStatus(500) });
+                .then(() => {
+                    db.saveMessage({ colors, friendId, fromFriendId });
+                    res.sendStatus(200);
+                }
+                )
+                .catch((err) => {
+                    res.sendStatus(500)
+                });
         }
     } catch (err) {
         if (err.message === "Friend not found") {
