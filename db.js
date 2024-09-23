@@ -199,9 +199,35 @@ async function saveMessage(message) {
         messageCollection.insertOne(message);
     } catch (err) {
         console.log(err);
-        throw err
+        throw err;
     }
 }
+
+async function getAllMessages() {
+    try {
+        const messageCollection = await getCollection("messages");
+        const messages = await messageCollection.find({});
+        return messages.toArray();
+    } catch (err) {
+        console.log(err);
+        throw err;
+    }
+}
+
+async function getMessageWithQuery(query) {
+    try {
+        const messageCollection = await getCollection("messages");
+        const messages = await messageCollection
+            .find(query)
+            .sort({ timestamp: -1 })
+            .toArray();
+        return messages
+    } catch (err) {
+        console.log(err);
+        throw err;
+    }
+}
+
 
 module.exports = {
     connectToDatabase,
@@ -214,4 +240,6 @@ module.exports = {
     addToQueue,
     updateTimestamp,
     saveMessage,
+    getAllMessages,
+    getMessageWithQuery,
 };

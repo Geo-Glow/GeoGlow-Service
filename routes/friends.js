@@ -121,7 +121,7 @@ router.post('/:friendId/colors', asyncHandler(async (req, res) => {
         } else {
             sendColors(friendId, colorMapping, fromFriendColor)
                 .then(() => {
-                    db.saveMessage({ colors, friendId, fromFriendId });
+                    db.saveMessage({ colors, toFriendId: friendId, fromFriendId });
                     res.sendStatus(200);
                 }
                 )
