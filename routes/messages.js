@@ -7,17 +7,18 @@ const router = express.Router();
 
 router.get('/', asyncHandler(async (req, res) => {
     let messages;
-    const { toFriendId, fromFriendId } = req.query;
+    const { toFriendId, fromFriendId, startTime, endTime } = req.query;
     try {
         const query = {}
 
-        if (toFriendId && !fromFriendId) {
-            query.toFriendId = toFriendId;
-        } else if (!toFriendId && fromFriendId) {
-            query.fromFriendId = fromFriendId;
-        } else if (toFriendId && fromFriendId) {
-            query.toFriendId = toFriendId;
-            query.fromFriendId = fromFriendId;
+        if (toFriendId) query.toFriendId = toFriendId;
+        if (fromFriendId) query.fromFriendId = fromFriendId;
+
+        if (startTime && endTime) {
+            query.timestamp = {
+                $gte: new Date(parseInt(startTime)),
+                $lte: new Date(parseInt(endTime)),
+            };
         }
 
         if (!toFriendId && !fromFriendId) {

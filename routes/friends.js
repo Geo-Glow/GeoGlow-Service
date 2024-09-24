@@ -104,6 +104,7 @@ router.post('/:friendId/colors', asyncHandler(async (req, res) => {
     try {
         const { colors, fromFriendId } = req.body;
         const { friendId } = req.params;
+        const shouldSaveMessage = req.query.shouldSaveMessage || true;
         const friend = await db.getFriend(friendId);
         const fromFriend = await db.getFriend(fromFriendId);
 
@@ -121,7 +122,9 @@ router.post('/:friendId/colors', asyncHandler(async (req, res) => {
         } else {
             sendColors(friendId, colorMapping, fromFriendColor)
                 .then(() => {
-                    db.saveMessage({ colors, toFriendId: friendId, fromFriendId });
+                    if (shouldSaveMessage === true || shouldSaveMessage === 'true') {
+                        db.saveMessage({ colors, toFriendId: friendId, fromFriendId });
+                    }
                     res.sendStatus(200);
                 }
                 )
