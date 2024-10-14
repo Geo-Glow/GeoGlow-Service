@@ -31,11 +31,21 @@ router.get('/generate', asyncHandler(async (req, res) => {
     }
 }));
 
+function generateUniqueId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 4; i++) {
+        const randomIndex = Math.floor(Math.random() * chars.length);
+        result += chars[randomIndex];
+    }
+    return result;
+}
+
 async function generateId() {
-    let id = 0;
+    let id = generateUniqueId();
     const existentIds = (await db.getGeneratedCodes()).map(code => code.friendId);
     while (existentIds.includes(id)) {
-        id++;
+        id = generateUniqueId();
     }
     return id;
 }
