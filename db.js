@@ -228,10 +228,12 @@ async function getMessageWithQuery(query) {
     }
 }
 
-async function getGeneratedIds() {
+async function getGeneratedCodes() {
     try {
         const idCollection = await getCollection("ids");
-        const ids = await idCollection.find({}).toArray();
+        const ids = await idCollection
+            .find({})
+            .toArray();
         return ids;
     } catch (err) {
         console.log(err);
@@ -239,10 +241,14 @@ async function getGeneratedIds() {
     }
 }
 
-async function saveGeneratedId(id) {
+async function saveGeneratedCode(id, qrcode) {
     try {
         const idCollection = await getCollection("ids");
-        await idCollection.insertOne(id);
+        const data = {
+            friendId: id,
+            qrcodestring: qrcode
+        }
+        await idCollection.insertOne(data);
     } catch (err) {
         console.log(err);
         throw err;
@@ -263,6 +269,6 @@ module.exports = {
     saveMessage,
     getAllMessages,
     getMessageWithQuery,
-    saveGeneratedId,
-    getGeneratedIds
+    saveGeneratedCode,
+    getGeneratedCodes
 };

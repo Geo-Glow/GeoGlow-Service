@@ -7,6 +7,6 @@ const idGenerationRoutes = require('./idGeneration');
 
 router.use('/friends', friendsRoutes);
 router.use('/messages', messageRoutes);
-router.use('/generate', idGenerationRoutes);
+router.use('/qrcodes', idGenerationRoutes);
 
 module.exports = router;
