@@ -228,6 +228,27 @@ async function getMessageWithQuery(query) {
     }
 }
 
+async function getGeneratedIds() {
+    try {
+        const idCollection = await getCollection("ids");
+        const ids = await idCollection.find({}).toArray();
+        return ids;
+    } catch (err) {
+        console.log(err);
+        throw err;
+    }
+}
+
+async function saveGeneratedId(id) {
+    try {
+        const idCollection = await getCollection("ids");
+        await idCollection.insertOne(id);
+    } catch (err) {
+        console.log(err);
+        throw err;
+    }
+}
+
 
 module.exports = {
     connectToDatabase,
@@ -242,4 +263,6 @@ module.exports = {
     saveMessage,
     getAllMessages,
     getMessageWithQuery,
+    saveGeneratedId,
+    getGeneratedIds
 };
