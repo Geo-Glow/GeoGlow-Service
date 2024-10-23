@@ -100,6 +100,58 @@ const mapColorsToTileIds = (tileIds, colors) => {
     }, {});
 };
 
+router.post('/colors', asyncHandler(async (req, res) => {
+    try {
+        const { colors, fromFriendId, toFriendIds } = req.body;
+
+        const fromFriend = await db.getFriend(fromFriendId);
+        if (!fromFriend) {
+            return res.status(404).json({ error: "From Friend not found" });
+        }
+
+        const promises = toFriendIds.map(async (toFriendId) => {
+            try {
+                const friend = await db.getFriend(toFriendId);
+                if (!friend) throw new Error("Friend not found");
+
+                const colorMapping = mapColorsToTileIds(friend.tileIds, colors);
+                await sendColors(toFriendId, colorMapping, fromFriend.color);
+            } catch (error) {
+                console.error(`Failed to process friendID ${toFriendId}`, error);
+                return { success: false, error: error.message };
+            }
+
+            return { success: true, toFriendId };
+        });
+
+        const results = await Promise.allSettled(promises);
+        const successes = results.filter(result => result.status === 'fulfilled' && result.value.success);
+        const failures = results.filter(result => result.status === 'rejected' || !result.value.success);
+
+        if (failures.length) {
+            console.warn(`Some operations failed:`, failures);
+            // Optionally, send details of the failures in the response
+        } else {
+            console.log("All operations were successful");
+        }
+
+        // Send back a general status or specific details
+        if (successes.length === toFriendIds.length) {
+            return res.sendStatus(200);
+        } else {
+            return res.status(207).json({
+                message: "Completed with some errors",
+                successes,
+                failures
+            });
+        }
+    } catch (err) {
+        console.error("Error handling colors:", err);
+        res.status(500).json({ error: "Internal server error" });
+        next(err);
+    }
+}));
+
 router.post('/:friendId/colors', asyncHandler(async (req, res) => {
     try {
         const { colors, fromFriendId } = req.body;
