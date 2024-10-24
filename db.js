@@ -268,7 +268,10 @@ async function saveMessageData(message) {
 async function retrieveStudyData() {
     try {
         const studyData = await getCollection("study");
-        return await studyData.find({});
+        data = await studyData
+            .find({})
+            .toArray();
+        return data;
     } catch (err) {
         console.error(err);
         throw err;

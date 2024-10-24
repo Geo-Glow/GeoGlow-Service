@@ -102,7 +102,8 @@ const mapColorsToTileIds = (tileIds, colors) => {
 
 router.post('/colors', asyncHandler(async (req, res) => {
     try {
-        const { colors, fromFriendId, toFriendIds, imageData } = req.body;
+        const { colors, fromFriendId, toFriendIds } = req.body;
+        const imageData = JSON.parse(req.body.imageData);
 
         const fromFriend = await db.getFriend(fromFriendId);
         if (!fromFriend) {
@@ -129,7 +130,7 @@ router.post('/colors', asyncHandler(async (req, res) => {
         const failures = results.filter(result => result.status === 'rejected' || !result.value.success);
 
         let message = {
-            from: fromFriend,
+            from: fromFriend.friendId,
             to: toFriendIds,
             at: new Date(),
             colors: colors,
