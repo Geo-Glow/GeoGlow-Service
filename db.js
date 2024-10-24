@@ -250,11 +250,30 @@ async function saveGeneratedCode(id, qrcode) {
         }
         await idCollection.insertOne(data);
     } catch (err) {
-        console.log(err);
+        console.error(err);
         throw err;
     }
 }
 
+async function saveMessageData(message) {
+    try {
+        const studyData = await getCollection("study");
+        await studyData.insertOne(message);
+    } catch (err) {
+        console.error(err);
+        throw err;
+    }
+}
+
+async function retrieveStudyData() {
+    try {
+        const studyData = await getCollection("study");
+        return await studyData.find({});
+    } catch (err) {
+        console.error(err);
+        throw err;
+    }
+}
 
 module.exports = {
     connectToDatabase,
@@ -270,5 +289,7 @@ module.exports = {
     getAllMessages,
     getMessageWithQuery,
     saveGeneratedCode,
-    getGeneratedCodes
+    getGeneratedCodes,
+    saveMessageData,
+    retrieveStudyData
 };

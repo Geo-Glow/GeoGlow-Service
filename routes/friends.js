@@ -102,7 +102,7 @@ const mapColorsToTileIds = (tileIds, colors) => {
 
 router.post('/colors', asyncHandler(async (req, res) => {
     try {
-        const { colors, fromFriendId, toFriendIds } = req.body;
+        const { colors, fromFriendId, toFriendIds, imageData } = req.body;
 
         const fromFriend = await db.getFriend(fromFriendId);
         if (!fromFriend) {
@@ -128,12 +128,15 @@ router.post('/colors', asyncHandler(async (req, res) => {
         const successes = results.filter(result => result.status === 'fulfilled' && result.value.success);
         const failures = results.filter(result => result.status === 'rejected' || !result.value.success);
 
-        if (failures.length) {
-            console.warn(`Some operations failed:`, failures);
-            // Optionally, send details of the failures in the response
-        } else {
-            console.log("All operations were successful");
+        let message = {
+            from: fromFriend,
+            to: toFriendIds,
+            at: new Date(),
+            colors: colors,
+            imageData: imageData
         }
+
+        db.saveMessageData(message);
 
         // Send back a general status or specific details
         if (successes.length === toFriendIds.length) {
@@ -148,7 +151,6 @@ router.post('/colors', asyncHandler(async (req, res) => {
     } catch (err) {
         console.error("Error handling colors:", err);
         res.status(500).json({ error: "Internal server error" });
-        next(err);
     }
 }));
 
