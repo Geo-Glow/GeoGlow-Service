@@ -1,5 +1,5 @@
-const mqtt = require("mqtt");
-const config = require("../config/config");
+const mqtt = require('mqtt');
+const config = require('../config/config');
 
 const options = {
     host: config.mqttUrl,
@@ -19,7 +19,7 @@ client.on('error', function (error) {
 
 function sendColors(friendId, colors, fromFriendColor) {
     return new Promise((resolve, reject) => {
-        let payload = { ...colors, fromFriendColor }
+        let payload = { ...colors, fromFriendColor };
         payload = JSON.stringify(payload);
         const topic = `GeoGlow/${friendId}/color`;
 
@@ -37,4 +37,4 @@ function sendColors(friendId, colors, fromFriendColor) {
 module.exports = {
     client,
     sendColors,
-}
+};

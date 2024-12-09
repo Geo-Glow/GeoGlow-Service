@@ -1,6 +1,6 @@
 require('dotenv').config();
-const { MongoClient } = require("mongodb");
-const { generateRandomColor } = require("./utils/colorUtils");
+const { MongoClient } = require('mongodb');
+const { generateRandomColor } = require('./utils/colorUtils');
 const uri = process.env.MONGO_URI;
 
 if (!uri) {
@@ -15,14 +15,14 @@ async function connectToDatabase() {
 
     try {
         await client.connect();
-        console.log("Connected to MongoDB");
-        db = client.db("Vreunde");
+        console.log('Connected to MongoDB');
+        db = client.db('Vreunde');
         await createTTLIndex();
         await createMessageCompoundIndex();
         return db;
     } catch (err) {
-        console.error("Error connecting to MongoDB", err);
-        throw new Error("Failed to connect to MongoDB");
+        console.error('Error connecting to MongoDB', err);
+        throw new Error('Failed to connect to MongoDB');
     }
 }
 
@@ -31,10 +31,10 @@ async function closeConnection() {
 
     try {
         await client.close();
-        console.log("MongoDB connection closed");
+        console.log('MongoDB connection closed');
     } catch (err) {
-        console.error("Error closing MongoDB connection", err);
-        throw new Error("Failed to close MongoDB connection");
+        console.error('Error closing MongoDB connection', err);
+        throw new Error('Failed to close MongoDB connection');
     }
 }
 
@@ -45,119 +45,137 @@ async function getCollection(collectionName) {
 
 async function getAllFriends() {
     try {
-        const friendsCollection = await getCollection("friends");
+        const friendsCollection = await getCollection('friends');
         return friendsCollection.find({}).toArray();
     } catch (err) {
-        console.error("Error retrieving friends:", err);
-        throw new Error("Failed to retrieve friends");
+        console.error('Error retrieving friends:', err);
+        throw new Error('Failed to retrieve friends');
     }
 }
 
 async function getAllFriendsInGroup(groupId) {
     try {
-        const friendsCollection = await getCollection("friends");
+        const friendsCollection = await getCollection('friends');
         return await friendsCollection.find({ groupId: groupId }).toArray();
     } catch (err) {
         console.error(`Error retrieving friends in group: ${groupId}`, err);
-        throw new Error("Failed to retrieve friendgroup");
+        throw new Error('Failed to retrieve friendgroup');
     }
 }
 
 async function updateTimestamp(friendId, timestamp) {
     try {
-        const friendsCollection = await getCollection("friends");
+        const friendsCollection = await getCollection('friends');
         const updateDoc = {
             $set: {
-                lastPing: timestamp
+                lastPing: timestamp,
             },
         };
-        const modified = await friendsCollection.updateOne({ friendId: friendId }, updateDoc);
-        if (modified.modifiedCount == 0) {
-            throw new Error("Friend not found");
+        const modified = await friendsCollection.updateOne(
+            { friendId: friendId },
+            updateDoc
+        );
+        if (modified.modifiedCount === 0) {
+            throw new Error('Friend not found');
         }
     } catch (err) {
-        if (err.message === "Friend not found") {
+        if (err.message === 'Friend not found') {
             throw err;
         } else {
-            console.error(`Error updating timestamp of friend with friendID: ${friendId}`, err);
-            throw new Error("Failed to update timestamp of friend");
+            console.error(
+                `Error updating timestamp of friend with friendID: ${friendId}`,
+                err
+            );
+            throw new Error('Failed to update timestamp of friend');
         }
     }
 }
 
 async function getFriend(friendId) {
     try {
-        const friendsCollection = await getCollection("friends");
+        const friendsCollection = await getCollection('friends');
         const friend = await friendsCollection.findOne({ friendId: friendId });
 
-        if (!friend) throw new Error("Friend not found");
+        if (!friend) throw new Error('Friend not found');
 
         return friend;
     } catch (err) {
-        if (err.message === "Friend not found") {
+        if (err.message === 'Friend not found') {
             throw err;
         } else {
-            console.error(`Error retrieving friend with friendId: ${friendId}`, err);
-            throw new Error("Failed to retrieve friend");
+            console.error(
+                `Error retrieving friend with friendId: ${friendId}`,
+                err
+            );
+            throw new Error('Failed to retrieve friend');
         }
     }
 }
 
 async function createNewFriend(data) {
     try {
-        const friendsCollection = await getCollection("friends");
+        const friendsCollection = await getCollection('friends');
         const { friendId, groupId } = data;
-        const friend = await friendsCollection.findOne({ friendId: friendId })
+        const friend = await friendsCollection.findOne({ friendId: friendId });
 
-        if (friend) throw new Error("Friend already exists");
+        if (friend) throw new Error('Friend already exists');
 
         // Fetch all friends in friend group
-        const groupFriends = await friendsCollection.find({ groupId: groupId }).toArray();
+        const groupFriends = await friendsCollection
+            .find({ groupId: groupId })
+            .toArray();
         // Extract existing colors
-        const reservedColors = new Set(groupFriends.map(friend => friend.color));
+        const reservedColors = new Set(
+            groupFriends.map((friend) => friend.color)
+        );
         // Generate new color
         data.color = generateRandomColor(reservedColors);
 
-        const lastPing = new Date();
-        data.lastPing = lastPing;
+        data.lastPing = new Date();
         data.queue = [];
         return await friendsCollection.insertOne(data);
     } catch (err) {
-        if (err.message === "Friend already exists") {
+        if (err.message === 'Friend already exists') {
             throw err;
         } else {
-            console.error("Error creating new friend resource: ", err);
-            throw new Error("Failed to create new friend ressource");
+            console.error('Error creating new friend resource: ', err);
+            throw new Error('Failed to create new friend resource');
         }
     }
 }
 
 async function pingFriend(data) {
     try {
-        const friendsCollection = await getCollection("friends");
+        const friendsCollection = await getCollection('friends');
         const updateDoc = {
             $set: {
                 tileIds: data.tileIds,
-                lastPing: new Date()
+                lastPing: new Date(),
             },
         };
-        return await friendsCollection.updateOne({ friendId: data.friendId }, updateDoc);
+        return await friendsCollection.updateOne(
+            { friendId: data.friendId },
+            updateDoc
+        );
     } catch (err) {
-        console.error("Error updating friend: ", err);
-        throw new Error("Failed to update friend");
+        console.error('Error updating friend: ', err);
+        throw new Error('Failed to update friend');
     }
 }
 
 async function addToQueue(friendId, colors) {
     try {
-        const friendsCollection = await getCollection("friends");
+        const friendsCollection = await getCollection('friends');
         const updateDoc = {
             $push: {
-                queue: colors
-            }
+                queue: colors,
+            },
         };
 
-        const result = await friendsCollection.updateOne({ friendId }, updateDoc);
+        const result = await friendsCollection.updateOne(
+            { friendId },
+            updateDoc
+        );
         if (result.matchedCount === 0) {
             throw new Error('Friend not found');
         }
@@ -172,31 +190,41 @@ async function addToQueue(friendId, colors) {
 
 async function createTTLIndex() {
     try {
-        const friendsCollection = await getCollection("friends");
-        await friendsCollection.createIndex({ lastPing: 1 }, { expireAfterSeconds: 150 });
-        console.log("TTL index created on lastPing field");
+        const friendsCollection = await getCollection('friends');
+        await friendsCollection.createIndex(
+            { lastPing: 1 },
+            { expireAfterSeconds: 150 }
+        );
+        console.log('TTL index created on lastPing field');
     } catch (err) {
-        console.error("Error creating TTL index:", err);
-        throw new Error("Failed to create TTL index");
+        console.error('Error creating TTL index:', err);
+        throw new Error('Failed to create TTL index');
     }
 }
 
 async function createMessageCompoundIndex() {
     try {
-        const messageCollection = await getCollection("messages");
-        await messageCollection.createIndex({ "fromFriendId": 1, "toFriendId": 1, "timestamp": -1 });
-        console.log("Compund index for message collection created");
+        const messageCollection = await getCollection('messages');
+        await messageCollection.createIndex({
+            fromFriendId: 1,
+            toFriendId: 1,
+            timestamp: -1,
+        });
+        console.log('Compound index for message collection created');
     } catch (err) {
-        console.error("Error creating compound index for message collection: ", err);
-        throw new Error("Failed to create compound index");
+        console.error(
+            'Error creating compound index for message collection: ',
+            err
+        );
+        throw new Error('Failed to create compound index');
     }
 }
 
 async function saveMessage(message) {
     try {
-        const messageCollection = await getCollection("messages");
+        const messageCollection = await getCollection('messages');
         message.timestamp = new Date();
-        messageCollection.insertOne(message);
+        await messageCollection.insertOne(message);
     } catch (err) {
         console.log(err);
         throw err;
@@ -205,7 +233,7 @@ async function saveMessage(message) {
 
 async function getAllMessages() {
     try {
-        const messageCollection = await getCollection("messages");
+        const messageCollection = await getCollection('messages');
         const messages = await messageCollection.find({});
         return messages.toArray();
     } catch (err) {
@@ -216,12 +244,11 @@ async function getAllMessages() {
 
 async function getMessageWithQuery(query) {
     try {
-        const messageCollection = await getCollection("messages");
-        const messages = await messageCollection
+        const messageCollection = await getCollection('messages');
+        return await messageCollection
             .find(query)
             .sort({ timestamp: -1 })
             .toArray();
-        return messages
     } catch (err) {
         console.log(err);
         throw err;
@@ -230,11 +257,8 @@ async function getMessageWithQuery(query) {
 
 async function getGeneratedCodes() {
     try {
-        const idCollection = await getCollection("ids");
-        const ids = await idCollection
-            .find({})
-            .toArray();
-        return ids;
+        const idCollection = await getCollection('ids');
+        return await idCollection.find({}).toArray();
     } catch (err) {
         console.log(err);
         throw err;
@@ -243,11 +267,11 @@ async function getGeneratedCodes() {
 
 async function saveGeneratedCode(id, qrcode) {
     try {
-        const idCollection = await getCollection("ids");
+        const idCollection = await getCollection('ids');
         const data = {
             friendId: id,
-            qrcodestring: qrcode
-        }
+            qrcodestring: qrcode,
+        };
         await idCollection.insertOne(data);
     } catch (err) {
         console.error(err);
@@ -257,7 +281,7 @@ async function saveGeneratedCode(id, qrcode) {
 
 async function saveMessageData(message) {
     try {
-        const studyData = await getCollection("study");
+        const studyData = await getCollection('study');
         await studyData.insertOne(message);
     } catch (err) {
         console.error(err);
@@ -267,11 +291,8 @@ async function saveMessageData(message) {
 
 async function retrieveStudyData() {
     try {
-        const studyData = await getCollection("study");
-        data = await studyData
-            .find({})
-            .toArray();
-        return data;
+        const studyData = await getCollection('study');
+        return await studyData.find({}).toArray();
     } catch (err) {
         console.error(err);
         throw err;
@@ -294,5 +315,5 @@ module.exports = {
     saveGeneratedCode,
     getGeneratedCodes,
     saveMessageData,
-    retrieveStudyData
+    retrieveStudyData,
 };
